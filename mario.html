@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Super Mario Game</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+            background-color: #87CEEB;
+        }
+        canvas {
+            display: block;
+            background-color: #5C94FC;
+        }
+        #status {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: white;
+            font-size: 24px;
+        }
+    </style>
+</head>
+<body>
+    <div id="status">Level 1</div>
+    <canvas id="gameCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        // Game Variables
+        let gravity = 1.5;
+        let playerSpeed = 5;
+        let jumpHeight = -15;
+        let currentLevel = 1;
+        let score = 0;
+        let gameOver = false;
+
+        class Player {
+            constructor() {
+                this.width = 50;
+                this.height = 50;
+                this.x = 100;
+                this.y = canvas.height - this.height - 10;
+                this.velocityY = 0;
+                this.jumping = false;
+                this.color = "red";
+            }
+
+            draw() {
+                ctx.fillStyle = this.color;
+                ctx.fillRect(this.x, this.y, this.width, this.height);
+            }
+
+            update() {
+                if (this.y + this.height + this.velocityY <= canvas.height) {
+                    this.y += this.velocityY;
+                    this.velocityY += gravity;
+                } else {
+                    this.jumping = false;
+                    this.velocityY = 0;
+                    this.y = canvas.height - this.height;
+                }
+            }
+
+            jump() {
+                if (!this.jumping) {
+                    this.jumping = true;
+                    this.velocityY = jumpHeight;
+                }
+            }
+
+            moveLeft() {
+                this.x -= playerSpeed;
+            }
+
+            moveRight() {
+                this.x += playerSpeed;
+            }
+
+            resetPosition() {
+                this.x = 100;
+                this.y = canvas.height - this.height - 10;
+            }
+        }
+
+        class Platform {
+            constructor(x, y, width, height) {
+                this.x = x;
+                this.y = y;
+                this.width = width;
+                this.height = height;
+                this.color = "green";
+            }
+
+            draw() {
+                ctx.fillStyle = this.color;
+                ctx.fillRect(this.x, this.y, this.width, this.height);
+            }
+        }
+
+        // Create player
+        const player = new Player();
+
+        // Create platforms
+        let platforms = [];
+        function createLevel1() {
+            platforms = [
+                new Platform(0, canvas.height - 50, canvas.width, 50),
+                new Platform(200, canvas.height - 150, 150, 20),
+                new Platform(400, canvas.height - 250, 150, 20),
+                new Platform(600, canvas.height - 350, 150, 20),
+            ];
+        }
+
+        function createLevel2() {
+            platforms = [
+                new Platform(0, canvas.height - 50, canvas.width, 50),
+                new Platform(300, canvas.height - 200, 150, 20),
+                new Platform(500, canvas.height - 300, 150, 20),
+                new Platform(700, canvas.height - 400, 150, 20),
+                new Platform(900, canvas.height - 500, 150, 20),
+            ];
+        }
+
+        createLevel1();
+
+        // Game controls
+        let keys = {};
+        window.addEventListener("keydown", function (e) {
+            keys[e.key] = true;
+            if (e.key === "ArrowUp") {
+                player.jump();
+            }
+        });
+        window.addEventListener("keyup", function (e) {
+            keys[e.key] = false;
+        });
+
+        // Detect collision between player and platforms
+        function checkPlatformCollision(player, platform) {
+            return (
+                player.x < platform.x + platform.width &&
+                player.x + player.width > platform.x &&
+                player.y + player.height < platform.y + platform.height &&
+                player.y + player.height + player.velocityY >= platform.y
+            );
+        }
+
+        // Main game loop
+        function gameLoop() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Player movement
+            if (keys["ArrowLeft"]) {
+                player.moveLeft();
+            }
+            if (keys["ArrowRight"]) {
+                player.moveRight();
+            }
+
+            player.update();
+            player.draw();
+
+            // Draw platforms
+            platforms.forEach((platform) => {
+                platform.draw();
+
+                // Check if player collides with platform
+                if (checkPlatformCollision(player, platform)) {
+                    player.velocityY = 0;
+                    player.jumping = false;
+                    player.y = platform.y - player.height;
+                }
+            });
+
+            // Move to next level if player reaches the end of the screen
+            if (player.x > canvas.width) {
+                nextLevel();
+            }
+
+            if (!gameOver) {
+                requestAnimationFrame(gameLoop);
+            }
+        }
+
+        function nextLevel() {
+            currentLevel++;
+            document.getElementById("status").textContent = `Level ${currentLevel}`;
+            player.resetPosition();
+
+            if (currentLevel === 2) {
+                createLevel2();
+            } else {
+                gameOver = true;
+                document.getElementById("status").textContent = "You win!";
+            }
+        }
+
+        // Start the game
+        gameLoop();
+    </script>
+</body>
+</html>
