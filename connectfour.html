@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connect Four</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f4f4f4;
+        }
+        h1 {
+            margin: 20px;
+        }
+        #gameBoard {
+            display: grid;
+            grid-template-columns: repeat(7, 60px);
+            gap: 5px;
+            justify-content: center;
+            margin: 20px auto;
+        }
+        .cell {
+            width: 60px;
+            height: 60px;
+            background-color: #00f;
+            border-radius: 10px;
+            position: relative;
+        }
+        .cell::before {
+            content: "";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 80%;
+            height: 80%;
+            border-radius: 50%;
+            background-color: #fff;
+            transform: translate(-50%, -50%);
+        }
+        .cell.red::before {
+            background-color: red;
+        }
+        .cell.yellow::before {
+            background-color: yellow;
+        }
+        #status {
+            margin-top: 20px;
+            font-size: 20px;
+        }
+        #resetButton {
+            margin-top: 10px;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        #resetButton:hover {
+            background-color: #0056b3;
+        }
+        #modeSelector {
+            margin: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Connect Four</h1>
+    <div id="modeSelector">
+        <label>
+            <input type="radio" name="mode" value="single" checked> Single Player (vs Computer)
+        </label>
+        <label>
+            <input type="radio" name="mode" value="multi"> Two Player
+        </label>
+    </div>
+    <div id="gameBoard"></div>
+    <div id="status">Player 1's turn (Red)</div>
+    <button id="resetButton">Reset Game</button>
+
+    <script>
+        const rows = 6;
+        const cols = 7;
+        let currentPlayer = 'red';
+        let gameOver = false;
+        let board = [];
+        let singlePlayer = true; // Default to single player mode
+
+        // Create the game board (2D array)
+        function createBoard() {
+            board = [];
+            for (let row = 0; row < rows; row++) {
+                const newRow = [];
+                for (let col = 0; col < cols; col++) {
+                    newRow.push('');
+                }
+                board.push(newRow);
+            }
+        }
+
+        // Render the game board in HTML
+        function renderBoard() {
+            const gameBoard = document.getElementById('gameBoard');
+            gameBoard.innerHTML = '';
+
+            for (let row = 0; row < rows; row++) {
+                for (let col = 0; col < cols; col++) {
+                    const cell = document.createElement('div');
+                    cell.classList.add('cell');
+                    if (board[row][col]) {
+                        cell.classList.add(board[row][col]);
+                    }
+                    cell.dataset.row = row;
+                    cell.dataset.col = col;
+                    cell.addEventListener('click', handleCellClick);
+                    gameBoard.appendChild(cell);
+                }
+            }
+        }
+
+        // Handle a cell click (drop a disc into a column)
+        function handleCellClick(event) {
+            if (gameOver || (singlePlayer && currentPlayer === 'yellow')) return; // Ignore clicks during AI turn
+
+            const col = parseInt(event.target.dataset.col);
+            if (dropDisc(col)) {
+                renderBoard();
+                if (checkWin()) {
+                    gameOver = true;
+                    alert(`Player ${currentPlayer === 'red' ? 1 : 2} (${currentPlayer === 'red' ? 'Red' : 'Yellow'}) wins!`);
+                    document.getElementById('status').textContent = `Player ${currentPlayer === 'red' ? 1 : 2} (${currentPlayer === 'red' ? 'Red' : 'Yellow'}) wins!`;
+                } else {
+                    togglePlayer();
+                    if (singlePlayer && currentPlayer === 'yellow') {
+                        setTimeout(computerMove, 500); // Add delay for AI move
+                    }
+                }
+            }
+        }
+
+        // Drop a disc into the selected column
+        function dropDisc(col) {
+            for (let row = rows - 1; row >= 0; row--) {
+                if (!board[row][col]) {
+                    board[row][col] = currentPlayer;
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        // Computer's move (randomly select a column)
+        function computerMove() {
+            if (gameOver) return;
+
+            let validCol = false;
+            while (!validCol) {
+                const randomCol = Math.floor(Math.random() * cols);
+                validCol = dropDisc(randomCol);
+            }
+
+            renderBoard();
+            if (checkWin()) {
+                gameOver = true;
+                alert("Computer (Yellow) wins!");
+                document.getElementById('status').textContent = "Computer (Yellow) wins!";
+            } else {
+                togglePlayer();
+            }
+        }
+
+        // Switch players
+        function togglePlayer() {
+            currentPlayer = currentPlayer === 'red' ? 'yellow' : 'red';
+            document.getElementById('status').textContent = `Player ${currentPlayer === 'red' ? 1 : (singlePlayer ? 'Computer' : 2)}'s turn (${currentPlayer === 'red' ? 'Red' : 'Yellow'})`;
+        }
+
+        // Check if a player has won
+        function checkWin() {
+            function checkDirection(row, col, rowDir, colDir) {
+                let count = 0;
+                let player = board[row][col];
+
+                for (let i = 0; i < 4; i++) {
+                    const r = row + i * rowDir;
+                    const c = col + i * colDir;
+
+                    if (r >= 0 && r < rows && c >= 0 && c < cols && board[r][c] === player) {
+                        count++;
+                    } else {
+                        break;
+                    }
+                }
+
+                return count === 4;
+            }
+
+            for (let row = 0; row < rows; row++) {
+                for (let col = 0; col < cols; col++) {
+                    if (board[row][col] && (
+                        checkDirection(row, col, 0, 1) ||   // Check horizontal
+                        checkDirection(row, col, 1, 0) ||   // Check vertical
+                        checkDirection(row, col, 1, 1) ||   // Check diagonal down-right
+                        checkDirection(row, col, 1, -1)     // Check diagonal down-left
+                    )) {
+                        return true;
+                    }
+                }
+            }
+
+            // Check if the board is full
+            if (board.flat().every(cell => cell)) {
+                gameOver = true;
+                document.getElementById('status').textContent = "It's a draw!";
+                alert("It's a draw!");
+                return false;
+            }
+
+            return false;
+        }
+
+        // Reset the game
+        function resetGame() {
+            createBoard();
+            renderBoard();
+            currentPlayer = 'red';
+            gameOver = false;
+            document.getElementById('status').textContent = "Player 1's turn (Red)";
+        }
+
+        // Initialize the game
+        document.getElementById('resetButton').addEventListener('click', resetGame);
+        
+        // Mode selector event listener
+        document.querySelectorAll('input[name="mode"]').forEach(modeInput => {
+            modeInput.addEventListener('change', (event) => {
+                singlePlayer = event.target.value === 'single';
+                resetGame();
+            });
+        });
+
+        resetGame(); // Start the game
+    </script>
+</body>
+</html>
