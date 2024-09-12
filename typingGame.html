@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Typing Speed Game</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f4f4f4;
+        }
+        h1 {
+            margin: 20px;
+        }
+        #gameContainer {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        #wordDisplay {
+            font-size: 32px;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+        #inputField {
+            width: 100%;
+            padding: 10px;
+            font-size: 20px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            margin-bottom: 20px;
+        }
+        #score {
+            font-size: 24px;
+            margin: 10px;
+        }
+        #time {
+            font-size: 24px;
+            margin: 10px;
+        }
+        #startButton {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 18px;
+        }
+        #startButton:hover {
+            background-color: #0056b3;
+        }
+        #gameOver {
+            color: red;
+            font-size: 28px;
+            font-weight: bold;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>Typing Speed Game</h1>
+    <div id="gameContainer">
+        <div id="wordDisplay">Press Start to Begin</div>
+        <input type="text" id="inputField" placeholder="Type here..." disabled />
+        <div id="score">Score: 0</div>
+        <div id="time">Time left: 30s</div>
+        <button id="startButton">Start Game</button>
+        <div id="gameOver">Game Over! Final Score: <span id="finalScore"></span></div>
+    </div>
+
+    <script>
+        const words = [
+            'apple', 'banana', 'cherry', 'date', 'elephant', 'forest', 'giraffe', 'honey', 'igloo',
+            'jungle', 'kangaroo', 'lemon', 'mountain', 'night', 'orange', 'penguin', 'queen', 'river', 
+            'snake', 'tiger', 'umbrella', 'volcano', 'water', 'xylophone', 'yellow', 'zebra'
+        ];
+
+        let currentWord = '';
+        let score = 0;
+        let timeLeft = 30;
+        let gameActive = false;
+
+        const wordDisplay = document.getElementById('wordDisplay');
+        const inputField = document.getElementById('inputField');
+        const scoreDisplay = document.getElementById('score');
+        const timeDisplay = document.getElementById('time');
+        const startButton = document.getElementById('startButton');
+        const gameOverDisplay = document.getElementById('gameOver');
+        const finalScoreDisplay = document.getElementById('finalScore');
+
+        // Start game function
+        function startGame() {
+            gameActive = true;
+            score = 0;
+            timeLeft = 30;
+            inputField.disabled = false;
+            inputField.focus();
+            startButton.disabled = true;
+            gameOverDisplay.style.display = 'none';
+            updateScore();
+            updateTime();
+            generateNewWord();
+            startTimer();
+        }
+
+        // Generate a random word
+        function generateNewWord() {
+            const randomIndex = Math.floor(Math.random() * words.length);
+            currentWord = words[randomIndex];
+            wordDisplay.textContent = currentWord;
+        }
+
+        // Check the user's input
+        inputField.addEventListener('input', function() {
+            if (inputField.value.toLowerCase() === currentWord.toLowerCase()) {
+                score++;
+                inputField.value = '';
+                generateNewWord();
+                updateScore();
+            }
+        });
+
+        // Update score display
+        function updateScore() {
+            scoreDisplay.textContent = `Score: ${score}`;
+        }
+
+        // Update time display
+        function updateTime() {
+            timeDisplay.textContent = `Time left: ${timeLeft}s`;
+        }
+
+        // Timer function
+        function startTimer() {
+            const timerInterval = setInterval(() => {
+                if (!gameActive) {
+                    clearInterval(timerInterval);
+                    return;
+                }
+
+                timeLeft--;
+                updateTime();
+
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    endGame();
+                }
+            }, 1000);
+        }
+
+        // End game function
+        function endGame() {
+            gameActive = false;
+            inputField.disabled = true;
+            startButton.disabled = false;
+            gameOverDisplay.style.display = 'block';
+            finalScoreDisplay.textContent = score;
+            wordDisplay.textContent = 'Game Over!';
+        }
+
+        // Start button event listener
+        startButton.addEventListener('click', startGame);
+    </script>
+</body>
+</html>
