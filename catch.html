@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Catch the Falling Stars - Hard Mode</title>
+    <style>
+        canvas {
+            background-color: #000;
+            display: block;
+            margin: 0 auto;
+        }
+        body {
+            text-align: center;
+            font-family: Arial, sans-serif;
+        }
+        h1 {
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <h1>Catch the Falling Stars - Hard Mode</h1>
+    <canvas id="gameCanvas" width="400" height="600"></canvas>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Basket object - smaller size now
+        const basket = {
+            x: canvas.width / 2 - 30,
+            y: canvas.height - 30,
+            width: 60, // Reduced width
+            height: 20,
+            color: '#fff',
+            move(event) {
+                this.x = event.clientX - canvas.offsetLeft - this.width / 2;
+                if (this.x < 0) this.x = 0;
+                if (this.x + this.width > canvas.width) this.x = canvas.width - this.width;
+            }
+        };
+
+        // Star object
+        const stars = [];
+        let starSize = 15; // Start with small star
+        let score = 0;
+        let gameOver = false;
+        let fallSpeedIncrease = 0.05; // Gradually increase fall speed
+
+        function createStar() {
+            return {
+                x: Math.random() * (canvas.width - starSize),
+                y: 0,
+                speed: 2 + Math.random() * 3 + (score * fallSpeedIncrease), // Speed increases with score
+                color: 'yellow'
+            };
+        }
+
+        // Add new stars at a faster rate
+        setInterval(() => {
+            if (!gameOver) stars.push(createStar());
+        }, 700); // Stars spawn faster now
+
+        function drawBasket() {
+            ctx.fillStyle = basket.color;
+            ctx.fillRect(basket.x, basket.y, basket.width, basket.height);
+        }
+
+        function drawStars() {
+            stars.forEach((star, index) => {
+                ctx.fillStyle = star.color;
+                ctx.beginPath();
+                ctx.arc(star.x, star.y, starSize / 2, 0, Math.PI * 2);
+                ctx.fill();
+                star.y += star.speed;
+
+                // Check if the star is caught
+                if (
+                    star.y + starSize >= basket.y &&
+                    star.x >= basket.x &&
+                    star.x <= basket.x + basket.width
+                ) {
+                    stars.splice(index, 1);
+                    score += 1;
+
+                    // Increase difficulty by making the stars bigger as score increases
+                    if (score % 5 === 0) {
+                        starSize += 1;
+                    }
+                }
+
+                // Check if the star hits the ground
+                if (star.y + starSize > canvas.height) {
+                    gameOver = true;
+                }
+            });
+        }
+
+        function drawScore() {
+            ctx.fillStyle = 'white';
+            ctx.font = '20px Arial';
+            ctx.fillText(`Score: ${score}`, 10, 30);
+        }
+
+        function drawGameOver() {
+            ctx.fillStyle = 'red';
+            ctx.font = '30px Arial';
+            ctx.fillText('Game Over!', canvas.width / 2 - 80, canvas.height / 2);
+        }
+
+        function gameLoop() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            if (!gameOver) {
+                drawBasket();
+                drawStars();
+                drawScore();
+            } else {
+                drawGameOver();
+            }
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Mouse move event listener to control the basket
+        canvas.addEventListener('mousemove', (event) => {
+            basket.move(event);
+        });
+
+        // Start the game
+        gameLoop();
+    </script>
+</body>
+</html>
