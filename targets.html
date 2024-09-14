@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aim Test Game</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            text-align: center;
+        }
+        #gameContainer {
+            position: relative;
+            width: 100vw;
+            height: 80vh;
+            background-color: #eaeaea;
+            margin: 20px auto;
+            overflow: hidden;
+        }
+        .target {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            background-color: red;
+            border-radius: 50%;
+            cursor: pointer;
+            display: none;
+        }
+        #score {
+            font-size: 24px;
+            margin: 20px;
+        }
+        #time {
+            font-size: 24px;
+            margin: 20px;
+        }
+        #startButton {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 18px;
+            cursor: pointer;
+            margin: 20px;
+        }
+        #startButton:hover {
+            background-color: #0056b3;
+        }
+        #gameOver {
+            font-size: 28px;
+            color: red;
+            display: none;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>Aim Test Game</h1>
+    <div id="gameContainer"></div>
+    <div id="score">Score: 0</div>
+    <div id="time">Time Left: 30s</div>
+    <button id="startButton">Start Game</button>
+    <div id="gameOver">Game Over! Final Score: <span id="finalScore"></span></div>
+
+    <script>
+        const gameContainer = document.getElementById("gameContainer");
+        const scoreDisplay = document.getElementById("score");
+        const timeDisplay = document.getElementById("time");
+        const startButton = document.getElementById("startButton");
+        const gameOverDisplay = document.getElementById("gameOver");
+        const finalScoreDisplay = document.getElementById("finalScore");
+
+        let score = 0;
+        let timeLeft = 30;
+        let gameActive = false;
+        let targetAppearInterval;
+        let targetDisappearTimeout;
+
+        function startGame() {
+            score = 0;
+            timeLeft = 30;
+            gameActive = true;
+            gameOverDisplay.style.display = 'none';
+            scoreDisplay.textContent = `Score: ${score}`;
+            timeDisplay.textContent = `Time Left: ${timeLeft}s`;
+            startButton.disabled = true;
+
+            startTimer();
+            showTarget();
+        }
+
+        // Timer function
+        function startTimer() {
+            const timerInterval = setInterval(() => {
+                if (!gameActive) {
+                    clearInterval(timerInterval);
+                    return;
+                }
+                timeLeft--;
+                timeDisplay.textContent = `Time Left: ${timeLeft}s`;
+
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    endGame();
+                }
+            }, 1000);
+        }
+
+        // Random position generator
+        function getRandomPosition() {
+            const containerWidth = gameContainer.offsetWidth;
+            const containerHeight = gameContainer.offsetHeight;
+            const targetSize = 50; // Target size is 50px by 50px
+
+            const randomX = Math.random() * (containerWidth - targetSize);
+            const randomY = Math.random() * (containerHeight - targetSize);
+
+            return { x: randomX, y: randomY };
+        }
+
+        // Create and show target
+        function showTarget() {
+            const target = document.createElement("div");
+            target.classList.add("target");
+
+            const { x, y } = getRandomPosition();
+            target.style.left = `${x}px`;
+            target.style.top = `${y}px`;
+            gameContainer.appendChild(target);
+
+            // Show the target
+            target.style.display = "block";
+
+            // Target disappears after 1 second if not clicked
+            targetDisappearTimeout = setTimeout(() => {
+                if (gameContainer.contains(target)) {
+                    gameContainer.removeChild(target);
+                }
+                if (gameActive) {
+                    showTarget(); // Show another target
+                }
+            }, 1000);
+
+            // Click event for target
+            target.addEventListener("click", () => {
+                if (gameActive) {
+                    score++;
+                    scoreDisplay.textContent = `Score: ${score}`;
+                    clearTimeout(targetDisappearTimeout); // Cancel auto-disappearance
+                    if (gameContainer.contains(target)) {
+                        gameContainer.removeChild(target); // Remove the target immediately
+                    }
+                    showTarget(); // Show the next target
+                }
+            });
+        }
+
+        // End game function
+        function endGame() {
+            gameActive = false;
+            startButton.disabled = false;
+            gameContainer.innerHTML = ''; // Clear all targets
+            gameOverDisplay.style.display = 'block';
+            finalScoreDisplay.textContent = score;
+        }
+
+        // Start button event listener
+        startButton.addEventListener("click", startGame);
+    </script>
+</body>
+</html>
